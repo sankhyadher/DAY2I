@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Day 2 — Reactivation & Counterconditioning</title>
+<title>Day 2 — Reactivation &amp; Counterconditioning</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -18,6 +18,10 @@
   --green:#00ffae;
   --red:#ff6a5a;
   --u:8px;
+  /* sketch stimulus ink — identical for every shape, so hue and lightness
+     carry no information about which shape is on screen */
+  --sketch-ink:#211f1c;
+  --sketch-paper:#f3f1ec;
   /* slot geometry — the stage is sized from these once and never resizes */
   --reel:clamp(84px,17.5vh,168px);
   --reel-gap:clamp(12px,2.2vw,30px);
@@ -45,6 +49,21 @@ body{
 /* full-viewport, scroll-free mode for the game */
 body.fit{overflow:hidden}
 body.fit .container{padding:calc(var(--u)*2); height:100vh; justify-content:center}
+
+/* =====================================================================
+   SKETCH INK SYSTEM — identical to Day 1 and Day 3.
+   All stimulus shapes are pen-and-ink line drawings in one shared ink on
+   one shared paper tone. Stroke widths and hatch spacing are identical
+   across shapes, so ink coverage is comparable and no shape is
+   systematically darker than another.
+   ===================================================================== */
+.sk-line,.sk-thin{fill:none;stroke:var(--sketch-ink);stroke-linecap:round;stroke-linejoin:round}
+.sk-line{stroke-width:2.6}
+.sk-thin{stroke-width:1.5;opacity:.5}
+.sk-hatch,.sk-hatch-lite{fill:none;stroke:var(--sketch-ink);stroke-linecap:round}
+.sk-hatch{stroke-width:1.6;opacity:.62}
+.sk-hatch-lite{stroke-width:1.3;opacity:.3}
+.gd{opacity:.26}
 
 /* ---------- centred panels ---------- */
 .panel{
@@ -110,11 +129,11 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold); out
 .shape-grid{display:flex; flex-wrap:wrap; gap:calc(var(--u)*2); justify-content:center; margin:calc(var(--u)*2.5) 0}
 .shape-opt{
   width:92px; height:92px; display:grid; place-items:center; padding:0;
-  background:#2b2b2b; border:2px solid #555; border-radius:12px; cursor:pointer;
+  background:var(--sketch-paper); border:2px solid #9a958c; border-radius:12px; cursor:pointer;
   transition:border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
-.shape-opt:hover{border-color:#8a8a8a}
-.shape-opt.selected{border-color:#0f0; background:#333; box-shadow:0 0 12px rgba(0,255,0,.55)}
+.shape-opt:hover{border-color:#5f5a52}
+.shape-opt.selected{border-color:#0f0; box-shadow:0 0 12px rgba(0,255,0,.55)}
 .shape-opt svg{width:64px; height:64px; display:block}
 
 /* ================= GAME ================= */
@@ -228,35 +247,42 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold); out
 .reel{
   width:var(--reel); height:var(--reel);
   display:grid; place-items:center;
-  background:linear-gradient(180deg,#fffdf2 0%,#f6e6b4 55%,#e8cf86 100%);
+  /* neutral paper face, matched byte-for-byte to Day 1 and Day 3 so the reel is
+     photometrically identical across sessions */
+  background:linear-gradient(180deg,#fdfcfa 0%,#f4f2ed 55%,#e6e3dc 100%);
   border:4px solid var(--brass); border-radius:14px;
   box-shadow:
     0 5px 16px rgba(0,0,0,.6),
     0 1px 0 rgba(255,253,242,.35),
     inset 0 3px 7px rgba(255,255,255,.95),
-    inset 0 -8px 18px rgba(160,120,30,.42),
+    inset 0 -8px 18px rgba(150,140,120,.30),
     inset 0 0 0 1px rgba(122,98,36,.35);
 }
 .reel{position:relative; overflow:hidden}
+/* inner top/bottom vignette — de-tinted from the original warm brown to a
+   neutral grey, so the reel face carries no colour cast that Days 1 and 3 lack */
 .reel::before{
   content:""; position:absolute; inset:0; border-radius:10px; pointer-events:none; z-index:0;
   background:
-    linear-gradient(180deg, rgba(90,66,10,.30) 0%, rgba(90,66,10,0) 16%,
-                    rgba(90,66,10,0) 84%, rgba(90,66,10,.34) 100%);
+    linear-gradient(180deg, rgba(72,70,66,.26) 0%, rgba(72,70,66,0) 16%,
+                    rgba(72,70,66,0) 84%, rgba(72,70,66,.30) 100%);
 }
 .reel svg{width:86%; height:86%; display:block; position:relative; z-index:1}
+/* softened gloss, matched to Day 1 and Day 3: a full specular highlight over
+   pencil hatching reads as an artefact rather than a finish */
 .reel::after{
   content:""; position:absolute; inset:0; border-radius:10px; pointer-events:none; z-index:2;
-  background:
-    linear-gradient(158deg, rgba(255,255,255,.62) 0%, rgba(255,255,255,.20) 30%,
-                    rgba(255,255,255,0) 50%),
-    linear-gradient(158deg, transparent 0 62%, rgba(255,255,255,.12) 62% 70%, transparent 70%);
+  background:linear-gradient(158deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,.10) 34%, rgba(255,255,255,0) 52%);
 }
 .reels.sparkle .reel{animation:sparkle-reel .45s alternate infinite}
 @keyframes sparkle-reel{
   0%{box-shadow:0 0 18px rgba(255,247,0,.7), inset 0 2px 5px rgba(255,255,255,.9)}
   100%{box-shadow:0 0 44px rgba(255,247,0,.95), 0 0 70px rgba(255,247,0,.5), inset 0 2px 5px rgba(255,255,255,.9)}
 }
+/* loss reaction: brightness is what carries the effect now that the stimuli are
+   achromatic — the saturate() term is a harmless no-op on grey ink and is kept
+   only so the animation matches the pre-sketch version frame for frame. This
+   fires at S 24, strictly after the feedback ERP window has closed. */
 .reels.dim .reel{animation:dim-reel .5s alternate infinite}
 @keyframes dim-reel{
   0%{filter:brightness(1)}
@@ -334,7 +360,8 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold); out
 .chip:hover:not(:disabled){transform:translateY(-2px)}
 .chip.selected{border-color:#8dff8d; box-shadow:0 0 16px #0f0, inset 0 0 0 3px rgba(122,98,36,.55)}
 .chip:disabled{opacity:.4; cursor:not-allowed; transform:none}
-.chip-shape{background:linear-gradient(180deg,#fffdf2,#eddaa2)}
+.chip-shape{background:linear-gradient(180deg,#fdfcfa,#eceae4)}
+.chip-shape.assigned-shape{cursor:default; pointer-events:none}
 .chip-shape svg{width:64%; height:64%; display:block}
 .chip-shape.selected{border-color:#8dff8d; box-shadow:0 0 16px #0f0, inset 0 0 0 3px rgba(122,98,36,.55)}
 
@@ -400,7 +427,7 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
 .probe-pair{display:flex; gap:calc(var(--u)*10); justify-content:center}
 .probe-btn{
   width:160px; height:160px; display:grid; place-items:center; padding:0;
-  background:#2b2b2b; border:2px solid #888; border-radius:12px; cursor:pointer;
+  background:var(--sketch-paper); border:2px solid #9a958c; border-radius:12px; cursor:pointer;
   transition:border-color .15s ease, box-shadow .15s ease;
 }
 .probe-btn:hover{border-color:#0f0; box-shadow:0 0 12px rgba(0,255,0,.4)}
@@ -496,144 +523,136 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
 </head>
 <body>
 
-<!-- ===== shape sprite: shaded 3D solids, uniform 100x100 viewBox ===== -->
+<!-- =====================================================================
+     SKETCH SHAPE SPRITE — pen-and-ink line drawings, uniform 100x100 viewBox.
+     Geometry, stroke widths and hatch spacing are byte-identical to Day 1 and
+     Day 3, so the CS stimuli are the same objects across all three sessions.
+
+     Every shape uses the same ink colour, the same outline stroke width (2.6),
+     the same hatch stroke width (1.6) and the same hatch spacing, lit from the
+     upper left. Hue and lightness are therefore constant across shapes and
+     cannot predict outcome; only geometry varies. This matters especially on
+     Day 2, where the Day 1 CS+ set is now punished: with the old colour scheme
+     the punished pair was purple and the unpunished pair green, so colour alone
+     predicted the loss.
+
+     Shading method: hatch strokes are drawn long and clipped to the face or
+     silhouette by a clipPath, so the fitted length of every stroke is computed
+     by the renderer rather than hand-authored. The sphere uses concentric arcs
+     centred at (18,15) — off-shape, up and to the left — which reads as
+     curvature instead of a flat gradient.
+
+     No SVG filters are used: the reels re-render every REEL_ANIM_FRAME ms
+     during the spin, and per-frame filter cost was deliberately avoided.
+     ===================================================================== -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <defs>
-  <radialGradient id="shadowFade" cx="50%" cy="50%" r="50%">
-    <stop offset="0%" stop-color="#000" stop-opacity=".55"/>
-    <stop offset="55%" stop-color="#000" stop-opacity=".24"/>
-    <stop offset="100%" stop-color="#000" stop-opacity="0"/>
-  </radialGradient>
-  <radialGradient id="gSpec" cx="50%" cy="50%" r="50%">
-    <stop offset="0%" stop-color="#fff" stop-opacity=".95"/>
-    <stop offset="50%" stop-color="#fff" stop-opacity=".38"/>
-    <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-  </radialGradient>
+  <clipPath id="ckSphere"><circle cx="50" cy="47" r="36"/></clipPath>
+  <clipPath id="ckCubeR"><polygon points="89,28 50,50 50,92 89,70"/></clipPath>
+  <clipPath id="ckCubeL"><polygon points="11,28 50,50 50,92 11,70"/></clipPath>
+  <clipPath id="ckPyrR"><polygon points="50,6 90,80 50,92"/></clipPath>
+  <clipPath id="ckPyrL"><polygon points="50,6 10,80 50,92"/></clipPath>
+  <clipPath id="ckCylBody"><path d="M17 26 A33 12 0 0 0 83 26 L83 70 A33 12 0 0 1 17 70 Z"/></clipPath>
+  <clipPath id="ckHexR"><polygon points="76,49 50,64 50,90 76,75"/></clipPath>
+  <clipPath id="ckHexL"><polygon points="24,49 50,64 50,90 24,75"/></clipPath>
+  <clipPath id="ckStar"><polygon points="50,7 60,37 92,37 66,56 76,88 50,68 24,88 34,56 8,37 40,37"/></clipPath>
+  <clipPath id="ckCapsule"><rect x="27" y="13" width="46" height="74" rx="23"/></clipPath>
 
-  <radialGradient id="gSphere" cx="34%" cy="26%" r="84%">
-    <stop offset="0%" stop-color="#ffffff"/>
-    <stop offset="9%" stop-color="#f1deff"/>
-    <stop offset="36%" stop-color="#b273ee"/>
-    <stop offset="70%" stop-color="#6a29b0"/>
-    <stop offset="100%" stop-color="#2c0b50"/>
-  </radialGradient>
-  <radialGradient id="gSphereBounce" cx="74%" cy="82%" r="44%">
-    <stop offset="0%" stop-color="#e8caff" stop-opacity=".5"/>
-    <stop offset="100%" stop-color="#e8caff" stop-opacity="0"/>
-  </radialGradient>
-
-  <linearGradient id="gCubeTop" x1="0" y1="0" x2=".3" y2="1">
-    <stop offset="0%" stop-color="#d8ffee"/><stop offset="55%" stop-color="#95e9c2"/>
-    <stop offset="100%" stop-color="#6bd2a4"/>
-  </linearGradient>
-  <linearGradient id="gCubeLeft" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#57c48e"/><stop offset="60%" stop-color="#37a06f"/>
-    <stop offset="100%" stop-color="#1f7350"/>
-  </linearGradient>
-  <linearGradient id="gCubeRight" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#2f9468"/><stop offset="60%" stop-color="#1f6f4c"/>
-    <stop offset="100%" stop-color="#124630"/>
-  </linearGradient>
-
-  <linearGradient id="gPyrLeft" x1=".1" y1="0" x2=".9" y2="1">
-    <stop offset="0%" stop-color="#f0e0ff"/><stop offset="45%" stop-color="#bd8bf0"/>
-    <stop offset="100%" stop-color="#7c40c8"/>
-  </linearGradient>
-  <linearGradient id="gPyrRight" x1=".9" y1="0" x2=".1" y2="1">
-    <stop offset="0%" stop-color="#8a4dd4"/><stop offset="55%" stop-color="#5a1f9e"/>
-    <stop offset="100%" stop-color="#2e0a58"/>
-  </linearGradient>
-
-  <linearGradient id="gCylBody" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="#17573b"/>
-    <stop offset="14%" stop-color="#3fa274"/>
-    <stop offset="32%" stop-color="#a7f0cd"/>
-    <stop offset="46%" stop-color="#6cc99b"/>
-    <stop offset="72%" stop-color="#2f8b62"/>
-    <stop offset="100%" stop-color="#12472f"/>
-  </linearGradient>
-  <linearGradient id="gCylTop" x1=".2" y1="0" x2=".8" y2="1">
-    <stop offset="0%" stop-color="#e6fff2"/><stop offset="55%" stop-color="#a2e8c6"/>
-    <stop offset="100%" stop-color="#63c294"/>
-  </linearGradient>
-
-  <linearGradient id="gOrangeTop" x1=".2" y1="0" x2=".8" y2="1">
-    <stop offset="0%" stop-color="#ffe6bd"/><stop offset="55%" stop-color="#ffc172"/>
-    <stop offset="100%" stop-color="#f0a03a"/>
-  </linearGradient>
-  <linearGradient id="gOrangeLeft" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#e8991f"/><stop offset="100%" stop-color="#b06a0d"/>
-  </linearGradient>
-  <linearGradient id="gOrangeRight" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#bd7414"/><stop offset="100%" stop-color="#8a4f06"/>
-  </linearGradient>
+  <!-- shared contact-shadow motif: identical under every shape -->
+  <g id="sk-ground">
+    <path class="sk-thin gd" d="M22 95 H68"/>
+    <path class="sk-thin gd" d="M30 98 H78"/>
+    <path class="sk-thin gd" d="M19 92 H39"/>
+  </g>
 
   <symbol id="sh-sphere" viewBox="0 0 100 100">
-    <ellipse cx="52" cy="91" rx="33" ry="7" fill="url(#shadowFade)"/>
-    <circle cx="50" cy="47" r="38" fill="url(#gSphere)"/>
-    <circle cx="50" cy="47" r="38" fill="url(#gSphereBounce)"/>
-    <ellipse cx="37" cy="28" rx="13" ry="9" fill="url(#gSpec)" transform="rotate(-28 37 28)"/>
-    <ellipse cx="63" cy="66" rx="6" ry="4" fill="#fff" opacity=".18" transform="rotate(-30 63 66)"/>
-    <circle cx="50" cy="47" r="38" fill="none" stroke="#2a0a4d" stroke-opacity=".5" stroke-width="1.5"/>
+    <use href="#sk-ground"/>
+    <g clip-path="url(#ckSphere)" class="sk-hatch">
+      <circle cx="18" cy="15" r="56"/><circle cx="18" cy="15" r="63"/>
+      <circle cx="18" cy="15" r="69"/><circle cx="18" cy="15" r="74"/>
+      <circle cx="18" cy="15" r="78"/><circle cx="18" cy="15" r="81"/>
+    </g>
+    <path class="sk-line" d="M50 11 C71 11 86 27 86 47 C86 68 70 84 50 84 C29 84 14 67 14 47 C14 26 30 11 50 11"/>
+    <path class="sk-thin" d="M54 13 C71 16 83 30 83 48 C83 67 69 81 51 82"/>
   </symbol>
 
   <symbol id="sh-cube" viewBox="0 0 100 100">
-    <ellipse cx="52" cy="94" rx="30" ry="6" fill="url(#shadowFade)"/>
-    <polygon points="50,6 89,28 50,50 11,28" fill="url(#gCubeTop)"/>
-    <polygon points="11,28 50,50 50,92 11,70" fill="url(#gCubeLeft)"/>
-    <polygon points="89,28 50,50 50,92 89,70" fill="url(#gCubeRight)"/>
-    <path d="M11 28 L50 6 L89 28" fill="none" stroke="#eafff5" stroke-opacity=".55" stroke-width="1.6"/>
-    <path d="M11 28 L50 50 L89 28" fill="none" stroke="#0f4a33" stroke-opacity=".35" stroke-width="1.4"/>
-    <path d="M50 50 L50 92" stroke="#0f4a33" stroke-opacity=".35" stroke-width="1.4"/>
-    <polygon points="11,28 50,50 50,92 11,70" fill="#000" opacity=".07"/>
+    <use href="#sk-ground"/>
+    <g clip-path="url(#ckCubeR)" class="sk-hatch">
+      <path d="M50 56 L89 34"/><path d="M50 63 L89 41"/><path d="M50 70 L89 48"/>
+      <path d="M50 77 L89 55"/><path d="M50 84 L89 62"/><path d="M50 91 L89 69"/>
+    </g>
+    <g clip-path="url(#ckCubeL)" class="sk-hatch-lite">
+      <path d="M11 40 L50 62"/><path d="M11 56 L50 78"/>
+    </g>
+    <path class="sk-line" d="M50 6 L89 28 L89 70 L50 92 L11 70 L11 28 Z"/>
+    <path class="sk-line" d="M11 28 L50 50 L89 28"/>
+    <path class="sk-line" d="M50 50 L50 92"/>
   </symbol>
 
   <symbol id="sh-pyramid" viewBox="0 0 100 100">
-    <ellipse cx="52" cy="92" rx="32" ry="6" fill="url(#shadowFade)"/>
-    <polygon points="50,6 10,80 50,92" fill="url(#gPyrLeft)"/>
-    <polygon points="50,6 90,80 50,92" fill="url(#gPyrRight)"/>
-    <path d="M50 6 L50 92" stroke="#f3e6ff" stroke-opacity=".5" stroke-width="1.6"/>
-    <path d="M50 6 L10 80 L50 92 L90 80 Z" fill="none" stroke="#2b0a52" stroke-opacity=".45" stroke-width="1.5" stroke-linejoin="round"/>
+    <use href="#sk-ground"/>
+    <g clip-path="url(#ckPyrR)" class="sk-hatch">
+      <path d="M50 30 L90 18"/><path d="M50 42 L90 30"/><path d="M50 54 L90 42"/>
+      <path d="M50 66 L90 54"/><path d="M50 78 L90 66"/><path d="M50 90 L90 78"/>
+    </g>
+    <g clip-path="url(#ckPyrL)" class="sk-hatch-lite">
+      <path d="M50 58 L10 46"/><path d="M50 82 L10 70"/>
+    </g>
+    <path class="sk-line" d="M50 6 L90 80 L50 92 L10 80 Z"/>
+    <path class="sk-line" d="M50 6 L50 92"/>
   </symbol>
 
   <symbol id="sh-cylinder" viewBox="0 0 100 100">
-    <ellipse cx="52" cy="92" rx="31" ry="6" fill="url(#shadowFade)"/>
-    <path d="M17 26 L17 70 A33 12 0 0 0 83 70 L83 26 Z" fill="url(#gCylBody)"/>
-    <path d="M17 66 A33 12 0 0 0 83 66" fill="none" stroke="#0c3d28" stroke-opacity=".35" stroke-width="4"/>
-    <ellipse cx="50" cy="26" rx="33" ry="12" fill="url(#gCylTop)"/>
-    <ellipse cx="46" cy="24" rx="19" ry="6" fill="#fff" opacity=".32"/>
-    <ellipse cx="50" cy="26" rx="33" ry="12" fill="none" stroke="#12472f" stroke-opacity=".5" stroke-width="1.5"/>
-    <path d="M17 26 L17 70 A33 12 0 0 0 83 70 L83 26" fill="none" stroke="#12472f" stroke-opacity=".5" stroke-width="1.5"/>
+    <use href="#sk-ground"/>
+    <g clip-path="url(#ckCylBody)" class="sk-hatch">
+      <path d="M56 20 V88"/><path d="M62 20 V88"/><path d="M67 20 V88"/><path d="M71 20 V88"/>
+      <path d="M75 20 V88"/><path d="M78 20 V88"/><path d="M81 20 V88"/>
+    </g>
+    <g clip-path="url(#ckCylBody)" class="sk-hatch-lite">
+      <path d="M20 20 V88"/><path d="M25 20 V88"/>
+    </g>
+    <path class="sk-line" d="M17 26 V70 A33 12 0 0 0 83 70 V26"/>
+    <ellipse class="sk-line" cx="50" cy="26" rx="33" ry="12"/>
   </symbol>
 
   <symbol id="sh-hexPrism" viewBox="0 0 100 100">
-    <ellipse cx="52" cy="94" rx="28" ry="6" fill="url(#shadowFade)"/>
-    <polygon points="50,8 76,23 76,49 50,64 24,49 24,23" fill="url(#gOrangeTop)"/>
-    <polygon points="24,49 50,64 50,90 24,75" fill="url(#gOrangeLeft)"/>
-    <polygon points="76,49 50,64 50,90 76,75" fill="url(#gOrangeRight)"/>
-    <path d="M24 23 L50 8 L76 23" fill="none" stroke="#fff2dc" stroke-opacity=".55" stroke-width="1.6"/>
-    <path d="M24 49 L50 64 L76 49" fill="none" stroke="#7a4405" stroke-opacity=".4" stroke-width="1.4"/>
-    <path d="M50 64 L50 90" stroke="#7a4405" stroke-opacity=".4" stroke-width="1.4"/>
+    <use href="#sk-ground"/>
+    <g clip-path="url(#ckHexR)" class="sk-hatch">
+      <path d="M50 68 L76 53"/><path d="M50 73 L76 58"/><path d="M50 78 L76 63"/>
+      <path d="M50 83 L76 68"/><path d="M50 88 L76 73"/>
+    </g>
+    <g clip-path="url(#ckHexL)" class="sk-hatch-lite">
+      <path d="M24 59 L50 74"/><path d="M24 71 L50 86"/>
+    </g>
+    <path class="sk-line" d="M50 8 L76 23 L76 75 L50 90 L24 75 L24 23 Z"/>
+    <path class="sk-line" d="M24 49 L50 64 L76 49"/>
+    <path class="sk-line" d="M50 64 L50 90"/>
+    <path class="sk-thin" d="M24 23 L50 38 L76 23"/>
+    <path class="sk-thin" d="M50 38 L50 64"/>
   </symbol>
 
   <symbol id="sh-starPrism" viewBox="0 0 100 100">
-    <ellipse cx="52" cy="94" rx="27" ry="6" fill="url(#shadowFade)"/>
-    <polygon points="50,7 60,37 92,37 66,56 76,88 50,68 24,88 34,56 8,37 40,37" fill="url(#gOrangeTop)"/>
-    <polygon points="50,7 60,37 50,45 40,37" fill="#fff" opacity=".38"/>
-    <polygon points="92,37 66,56 50,45 60,37" fill="#c47512" opacity=".3"/>
-    <polygon points="76,88 50,68 50,45 66,56" fill="#a35f08" opacity=".38"/>
-    <polygon points="24,88 50,68 50,45 34,56" fill="#c47512" opacity=".2"/>
-    <polygon points="50,7 60,37 92,37 66,56 76,88 50,68 24,88 34,56 8,37 40,37"
-             fill="none" stroke="#7a4405" stroke-opacity=".45" stroke-width="1.5" stroke-linejoin="round"/>
+    <use href="#sk-ground"/>
+    <g clip-path="url(#ckStar)" class="sk-hatch">
+      <path d="M-40 140 L140 -40"/><path d="M-31 140 L149 -40"/><path d="M-22 140 L158 -40"/>
+      <path d="M-13 140 L167 -40"/><path d="M-4 140 L176 -40"/><path d="M5 140 L185 -40"/>
+    </g>
+    <path class="sk-line" d="M50 7 L60 37 L92 37 L66 56 L76 88 L50 68 L24 88 L34 56 L8 37 L40 37 Z"/>
+    <path class="sk-thin" d="M50 7 L50 45 M40 37 L50 45 M60 37 L50 45 M34 56 L50 45 M66 56 L50 45 M50 68 L50 45"/>
   </symbol>
 
   <symbol id="sh-capsule" viewBox="0 0 100 100">
-    <ellipse cx="52" cy="94" rx="23" ry="6" fill="url(#shadowFade)"/>
-    <rect x="27" y="13" width="46" height="74" rx="23" fill="url(#gOrangeTop)"/>
-    <path d="M27 50 h46" stroke="#7a4405" stroke-opacity=".45" stroke-width="1.6"/>
-    <path d="M27 50 v14 a23 23 0 0 0 46 0 V50 Z" fill="url(#gOrangeRight)" opacity=".92"/>
-    <ellipse cx="39" cy="30" rx="5" ry="13" fill="url(#gSpec)" opacity=".85"/>
-    <rect x="27" y="13" width="46" height="74" rx="23" fill="none" stroke="#7a4405" stroke-opacity=".5" stroke-width="1.6"/>
+    <use href="#sk-ground"/>
+    <g clip-path="url(#ckCapsule)" class="sk-hatch">
+      <path d="M56 8 V92"/><path d="M61 8 V92"/><path d="M65 8 V92"/>
+      <path d="M69 8 V92"/><path d="M72 8 V92"/>
+    </g>
+    <g clip-path="url(#ckCapsule)" class="sk-hatch-lite">
+      <path d="M33 8 V92"/><path d="M37 8 V92"/>
+    </g>
+    <rect class="sk-line" x="27" y="13" width="46" height="74" rx="23"/>
+    <path class="sk-thin" d="M27 50 H73"/>
   </symbol>
 </defs>
 </svg>
@@ -644,7 +663,7 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
 
 <!-- ============ 1. PARTICIPANT ============ -->
 <form class="panel" id="participantForm">
-  <h2>Session 2 </h2>
+  <h2>DAY 2 </h2>
   <div class="field"><label for="pName">Name</label><input type="text" id="pName" required autocomplete="off"></div>
   <div class="field"><label for="pAge">Age</label><input type="number" id="pAge" min="18" max="99" required></div>
   <div class="field"><label for="pGender">Gender</label>
@@ -663,7 +682,7 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
   <p class="lead" id="baselineInstruction">Sit still and relax. Keep your eyes on the cross and blink normally.</p>
   <div class="baseline-stage">
     <div class="fixation" id="baselineFix">+</div>
-    <div class="timer"><span id="baselineTimer">60</span>s</div>
+    <div class="timer"><span id="baselineTimer">30</span>s</div>
     <div class="progress" id="baselineBlockInfo">Block 1 of 4</div>
   </div>
   <button class="corner-skip" type="button" data-skip="baseline">Skip baseline</button>
@@ -684,15 +703,19 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
 <!-- ============ 5. RETRIEVAL INSTRUCTIONS ============ -->
 <div class="panel hidden" id="retrievalIntro">
   <h2>Welcome to the casino slot machine game</h2>
-  <div class="body-text">
-    <p>You will play <b>10 short rounds</b> of the same slot machine you played last time.</p>
-    <p>When the chips light up, choose <b>how much to bet</b> and <b>which shape to bet on</b>, then press <b>SPIN</b>.</p>
+  <div style="max-width:600px;margin:0 auto">
+    <p>You will play <b>10 rounds</b>. Each round starts with a cross in the middle of the screen, keep looking at it.</p>
+    <p>When the chips light up, choose <b>how much to bet and select the shape </b> and, then press <b>SPIN</b>.</p>
     <p><b>Higher the bet, higher the risk and potential reward.</b> You start with <b>$2000</b>. Try to climb the leaderboard by winning more.</p>
     <p class="lead">Stay as still as you can, and blink mainly while the cross is on screen. This keeps the recording clean. Good luck!</p>
   </div>
-  <div class="btn-row"><button class="btn" type="button" id="startRetrievalBtn">Start</button></div>
+  <div class="btn-row">
+    <button class="btn" type="button" id="startGameBtn">Start game</button>
+  </div>
+  <!-- FIX: data-skip value now matches the switch case in the skip handler -->
   <button class="corner-skip" type="button" data-skip="retrievalIntro">Skip</button>
 </div>
+
 
 <!-- ============ 6. GAME (shared by retrieval and counterconditioning) ============ -->
 <div class="hidden" id="gameLayout">
@@ -848,7 +871,7 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
 <div class="panel hidden" id="ccIntro">
   <h2>Welcome to the casino slot machine game</h2>
   <div class="body-text">
-    <p>You will now play <b>50 rounds</b> of the slot machine. It works exactly as before: wait for the cross, choose <b>how much to bet</b> and <b>which shape to bet on</b>, then press <b>SPIN</b>.</p>
+    <p>You will now play <b>80 rounds</b> of the slot machine. It works exactly as before: wait for the cross, choose <b>how much to bet</b> and <b>which shape to bet on</b>, then press <b>SPIN</b>.</p>
     <p><b>Higher the bet, higher the risk and potential reward.</b> You start with <b>$2000</b>. Try to climb the leaderboard.</p>
     <p class="lead">Stay as still as you can, and blink mainly while the cross is on screen. Good luck!</p>
   </div>
@@ -907,18 +930,6 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
   <button class="corner-skip" type="button" data-skip="affective">Skip</button>
 </form>
 
-<!-- ============ 14. MEMORY / CONTINGENCY ============ -->
-<form class="panel hidden" id="memoryForm">
-  <h3>Which shapes appeared in the slot machine game?</h3>
-  <p class="lead">Select every shape you saw.</p>
-  <div class="shape-grid" id="memorySymbolsList"></div>
-  <hr class="divider">
-  <h3>Which shapes were most disappointing?</h3>
-  <div class="shape-grid" id="contingencySymbolsList"></div>
-  <div class="btn-row"><button class="btn" type="submit">Continue</button></div>
-  <button class="corner-skip" type="button" data-skip="memory">Skip</button>
-</form>
-
 <!-- ============ 15. END ============ -->
 <div class="panel hidden" id="thankYou">
   <h2>Thank you — Session 2 complete</h2>
@@ -944,20 +955,21 @@ const CONFIG = {
   ITI_MAX: 1500,
   CUE_MIN_VIEW: 500,
   POST_CHOICE_BLANK: 500,
-  ANTICIPATION: 2000,
-  FREEZE_MIN: 150,
-  FREEZE_MAX: 200,
+  ANTICIPATION: 2200,       // was 2000 — widened to match Day 1's fix
+  FREEZE_MIN: 600,          // was 150 — widened so the full -500/0 ms SPN/CNV baseline
+  FREEZE_MAX: 700,          // (CC block) sits inside a genuinely motion-free freeze
   FEEDBACK_ERP: 1500,
   CELEBRATION: 1200,
   POST_FEEDBACK_BLANK: 800,
   REEL_ANIM_FRAME: 100,
 
   /* --- block sizes --- */
-  RETRIEVAL_TRIALS: 10,     // reactivation block, rigged win, no wallet readout
-  CC_TRIALS: 50,            // counterconditioning block
+  RETRIEVAL_TRIALS: 10,     // reactivation block, no feedback, no wallet readout
+  CC_TRIALS: 80,            // counterconditioning block (was 50) — 40 LOSS / 40 NO-GAIN
+                            // via the balanced forced shape sequence, matching Day 1's 80
 
   /* --- resting baseline (IDENTICAL TO DAY 1, for cross-day FAA) --- */
-  BASELINE_BLOCK_S: 60,
+  BASELINE_BLOCK_S: 30,
   BASELINE_SEQUENCE: ['EO','EC','EO','EC'],
 
   /* --- probe (IDENTICAL TO DAY 1) --- */
@@ -1022,14 +1034,12 @@ const MARKERS = {
   S23:['S 23','CC feedback offset'],
   S24:['S 24','CC reaction onset (post-ERP)'],
   S26:['S 26','CC trial end'],
-  S27:['S 27','CC feedback onset — LOSS'],
+  S27:['S 27','CC feedback onset — LOSS (three-of-a-kind, mirrors Day 1 S 21)'],
   S28:['S 28','CC loss sound onset (post-ERP, loss only)'],
   S29:['S 29','Counterconditioning block end'],
 
   S30:['S 30','Affective rating start'],
   S31:['S 31','Affective rating end'],
-  S40:['S 40','Memory / contingency start'],
-  S41:['S 41','Memory / contingency end'],
   S50:['S 50','Probe block start'],
   S51:['S 51','Probe fixation onset'],
   S52:['S 52','Probe stimulus onset'],
@@ -1081,15 +1091,15 @@ const MARKERS = {
 
 /* ===================== ANALYSIS WINDOW REFERENCE ===================== */
 const ANALYSIS_WINDOWS = [
-  ['FRN / RewP (counterconditioning)','S 27 vs S 22','Feedback onset','200','350','FCz, Fz','Difference wave LOSS minus NO-GAIN; -200 to 0 ms baseline. Cross-day contrast: Day1 S21-S22 vs Day2 S27-S22'],
+  ['FRN / RewP (counterconditioning)','S 27 vs S 22','Feedback onset','200','350','FCz, Fz','Difference wave LOSS minus NO-GAIN; -200 to 0 ms baseline. The Day 2 LOSS panel is the IDENTICAL visual event as the Day 1 WIN panel (three-of-a-kind of the assigned shape, magnitude = bet x 2), so the cross-day contrast Day1 S21-S22 vs Day2 S27-S22 holds combo geometry, slab format and bet magnitude constant and varies only outcome VALENCE (sign of the slab). Stimuli are achromatic line drawings with matched ink coverage, so shape identity is uncorrelated with hue or lightness. Any cross-day amplitude difference is therefore attributable to valence/prediction error, not to perceptual form'],
   ['P3a','S 27, S 22','Feedback onset','250','350','Fz, FCz','Novelty / salience. CC block only — the reactivation block has no feedback'],
-  ['P3b (P300)','S 27, S 22','Feedback onset','300','500','Pz, CPz','Peak or mean amplitude; -200 to 0 ms baseline'],
+  ['P3b (P300)','S 27, S 22','Feedback onset','300','500','Pz, CPz','Peak or mean amplitude; -200 to 0 ms baseline. Combo geometry is matched to Day 1, so P3b differences index outcome significance rather than stimulus complexity'],
   ['LPP early','S 27, S 22','Feedback onset','400','700','CPz, Pz','Requires >=1500 ms feedback display'],
   ['LPP late','S 27, S 22','Feedback onset','700','1500','CPz, Pz','Sustained motivational salience'],
   ['LPP — reactivation cue','S 72','Cue onset','400','1500','CPz, Pz','Cue-locked appetitive salience; the only ERP available in the feedback-free block'],
-  ['SPN / CNV','S 16','Anticipation onset','-400','0','FCz, Cz','CC block only: locked to feedback onset S 27/S 22 as pre-stimulus; final 150-200 ms (S 17) is a static, motion-free freeze'],
+  ['SPN / CNV','S 17','Freeze onset (static, motion-free)','-500','0','FCz, Cz','CC block only: locked to feedback onset S 27/S 22 as pre-stimulus baseline; freeze (S 17) now holds 600-700 ms, so the full -500/0 ms window is entirely static'],
   ['Frontal-midline theta — reactivation','S 72, S 76','Cue and anticipation onset','0','2000','Fz, FCz','4-8 Hz power. PRIMARY reactivation manipulation check; 10 trials is adequate for oscillations, not for ERPs. No feedback exists in this block'],
-  ['Time-frequency: loss theta','S 27, S 22','Feedback onset','200','500','FCz','4-8 Hz power; epoch -1500 to +2500 ms'],
+  ['Time-frequency: loss theta','S 27, S 22','Feedback onset','200','500','FCz','4-8 Hz power; epoch -1500 to +2500 ms. Directly comparable to the Day 1 reward-theta contrast because the eliciting stimulus is visually identical'],
   ['Time-frequency: beta','S 27','Feedback onset','200','500','Cz, CPz','15-30 Hz'],
   ['Time-frequency: anticipatory alpha','S 16, S 76','Anticipation onset','0','2000','Pz, O1, O2','8-13 Hz desynchronisation'],
   ['FAA resting','S 2/S 3, S 4/S 5','Baseline blocks','0','60000','F3, F4 (also F7/F8)','ln(alpha F4) - ln(alpha F3); 2 s epochs, 50% overlap, 8-13 Hz. Same 4-block protocol as Day 1'],
@@ -1105,18 +1115,69 @@ const ANALYSIS_WINDOWS = [
 
 /* ===================== STATE ===================== */
 const GAME_SHAPES = ['sphere','cube','pyramid','cylinder'];
-const DISTRACTORS = ['hexPrism','starPrism','capsule'];
 const REWARD_SHAPES = ['sphere','pyramid'];          // Day 1 CS+ — now punished
+const NONREWARD_SHAPES = GAME_SHAPES.filter(s => !REWARD_SHAPES.includes(s));
 const NOGAIN_COMBOS = [['cube','cube','cylinder'],['cylinder','cylinder','cube'],['cube','cylinder','cylinder']];
-/* loss combos are sphere/pyramid mixtures, never three-of-a-kind
-   (three-of-a-kind is the Day 1 win signature and must not be shown on a loss) */
-const LOSS_COMBOS = (() => {
-  const out = [];
-  REWARD_SHAPES.forEach(a => REWARD_SHAPES.forEach(b => REWARD_SHAPES.forEach(c => {
-    if (!(a === b && b === c)) out.push([a,b,c]);
-  })));
-  return out;
-})();
+/* NOTE: LOSS combos are no longer a separate mixed-shape set. The loss outcome now
+   mirrors the Day 1 win exactly — three-of-a-kind of the assigned shape — so that
+   combo geometry is held constant across days and only the VALENCE of the slab
+   flips. See BLOCKS.cc.resolve(). */
+
+/* ===================== FORCED SHAPE SEQUENCE (CC block only — see Day 1 for full rationale) =====================
+   The retrieval block keeps free choice (no feedback exists there, so there is no
+   FRN-balance problem to solve, and preference-during-reactivation is itself a
+   behavioral variable of interest). The CC block reproduces Day 1's free-choice +
+   deterministic-outcome issue (now for LOSS instead of WIN), so it gets the same
+   pre-generated, balanced, run-capped shape sequence. */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffleArr(arr, rng){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function generateShapeSequence(n, seed, maxRun = 2){
+  const rng = mulberry32(seed);
+  const half = n / 2;
+  const runLengths = (total) => {
+    const lens = []; let remaining = total;
+    while (remaining > 0){
+      let len = 1 + Math.floor(rng() * maxRun);
+      if (len > remaining) len = remaining;
+      lens.push(len); remaining -= len;
+    }
+    return lens;
+  };
+  const baseLens = runLengths(half);
+  const lensA = shuffleArr(baseLens, rng);
+  const lensB = shuffleArr(baseLens, rng);
+  const typeA = rng() < 0.5 ? 'rewarded' : 'nonrewarded';
+  const typeB = typeA === 'rewarded' ? 'nonrewarded' : 'rewarded';
+  const typeSeq = [];
+  for (let i = 0; i < baseLens.length; i++){
+    for (let k = 0; k < lensA[i]; k++) typeSeq.push(typeA);
+    for (let k = 0; k < lensB[i]; k++) typeSeq.push(typeB);
+  }
+  const fill = (count, options) => {
+    const arr = [];
+    for (let i = 0; i < count; i++) arr.push(options[i % options.length]);
+    return shuffleArr(arr, rng);
+  };
+  const rewardedShapes = fill(half, REWARD_SHAPES);
+  const nonrewardedShapes = fill(half, NONREWARD_SHAPES);
+  let ri = 0, ni = 0;
+  return typeSeq.map(type => type === 'rewarded' ? rewardedShapes[ri++] : nonrewardedShapes[ni++]);
+}
+let ccShapeSequence = [];
 
 const T0 = performance.now();
 const T0_ISO = new Date().toISOString();
@@ -1126,11 +1187,10 @@ const P = {
   name:'', age:'', gender:'', day:2,
   retrievalTrials: [], ccTrials: [], probe: [],
   affective:{valence:null,arousal:null,rt:null},
-  memory:{responses:[],hits:0,falseAlarms:0,rt:null},
-  contingency:{responses:[],hits:0,falseAlarms:0,rt:null},
   baselineBlocks: [],
   digit: [], word: [], breath: {}, trails: [], cold: {},
-  totalWinnings: 0, skipped: []
+  totalWinnings: 0, skipped: [],
+  ccRngSeed: null, ccShapeSequence: []
 };
 
 let trialNum = 0, betAmount = null, betShape = null, wallet = CONFIG.START_WALLET;
@@ -1167,6 +1227,7 @@ function initMarkerBridge(){
 function flashDiode(){
   if (!CONFIG.PHOTODIODE) return;
   const d = document.getElementById('diode');
+  if (!d) return;
   d.classList.add('on');
   setTimeout(()=>d.classList.remove('on'), CONFIG.DIODE_MS);
 }
@@ -1176,13 +1237,25 @@ const mmss = s => `${String(Math.floor(Math.max(s,0)/60)).padStart(2,'0')}:${Str
 
 /* ===================== NAV ===================== */
 const $ = id => document.getElementById(id);
+
+/* SAFE BINDER — a single missing / mistyped id can no longer throw a TypeError
+   and kill the rest of the script (which is exactly what was silently disabling
+   every skip button before). It logs a warning and carries on. */
+function on(id, fn){
+  const el = $(id);
+  if (el) el.onclick = fn;
+  else console.warn('[bind] element not found:', id);
+}
+
 const SCREENS = ['participantForm','baselineScreen','probeTask',
                  'retrievalIntro','gameLayout','digitIntro','digitTask','wordIntro','wordTask',
                  'breathIntro','breathTask','trailIntro','trailTask','ccIntro',
-                 'coldIntro','coldTask','affectiveForm','memoryForm','thankYou'];
+                 'coldIntro','coldTask','affectiveForm','thankYou'];
 function show(id){
-  SCREENS.forEach(s => $(s).classList.add('hidden'));
-  $(id).classList.remove('hidden');
+  SCREENS.forEach(s => { const el = $(s); if (el) el.classList.add('hidden'); });
+  const target = $(id);
+  if (target) target.classList.remove('hidden');
+  else console.warn('[show] screen not found:', id);
   document.body.classList.toggle('fit', id === 'gameLayout');
   window.scrollTo(0,0);
 }
@@ -1254,7 +1327,11 @@ const BLOCKS = {
     m: {start:'S10', fix:'S11', cue:'S12', amt:'S13', shape:'S14', spin:'S15',
         ant:'S16', freeze:'S17', fbPos:'S27', fbNeutral:'S22', fbOff:'S23',
         react:'S24', sound:'S28', trialEnd:'S26', end:'S29'},
-    /* Day 1 CS+ (sphere, pyramid) now yields a LOSS; CS- returns the stake */
+    /* Day 1 CS+ (sphere, pyramid) now yields a LOSS; CS- returns the stake.
+       MIRRORS DAY 1'S WIN LOGIC EXACTLY: three-of-a-kind of the assigned shape,
+       magnitude = bet x 2. Only the SIGN is reversed, so the feedback panel is
+       perceptually identical to the Day 1 win panel and the cross-day ERP
+       contrast varies valence alone. */
     resolve(){
       const rewarded = REWARD_SHAPES.includes(betShape);
       const isLoss = CONFIG.REINFORCEMENT === 'deterministic'
@@ -1262,8 +1339,8 @@ const BLOCKS = {
         : Math.random() < (rewarded ? CONFIG.P_LOSS_REWARDED : CONFIG.P_LOSS_NONREWARDED);
       if (isLoss){
         return {outcome:'loss',
-                combo: LOSS_COMBOS[Math.floor(Math.random()*LOSS_COMBOS.length)].slice(),
-                amount: betAmount};
+                combo: [betShape, betShape, betShape],
+                amount: betAmount * 2};
       }
       return {outcome:'nogain',
               combo: NOGAIN_COMBOS[Math.floor(Math.random()*NOGAIN_COMBOS.length)].slice().sort(()=>Math.random()-0.5),
@@ -1273,14 +1350,24 @@ const BLOCKS = {
 };
 let B = null;   // active block descriptor
 
-$('startRetrievalBtn').onclick = () => startBlock('retrieval');
-$('startCcBtn').onclick = () => startBlock('cc');
+/* FIX: the button in #retrievalIntro is id="startGameBtn", not "startRetrievalBtn".
+   The old line threw a TypeError here and aborted the whole script, which is why
+   NONE of the skip handlers below were ever registered. */
+on('startGameBtn', () => startBlock('retrieval'));
+on('startCcBtn',   () => startBlock('cc'));
 
 function startBlock(key){
   B = BLOCKS[key];
   currentBlock = B.name;
   trialNum = 0; blockAborted = false;
   totalWinnings = 0; wallet = CONFIG.START_WALLET;
+
+  if (key === 'cc'){
+    const seed = Math.floor(Math.random() * 2**31);
+    ccShapeSequence = generateShapeSequence(CONFIG.CC_TRIALS, seed);
+    P.ccRngSeed = seed;
+    P.ccShapeSequence = ccShapeSequence.slice();
+  }
 
   $('readouts').classList.toggle('hidden', !B.showReadouts);
   $('totalWinnings').classList.remove('negative');
@@ -1290,7 +1377,7 @@ function startBlock(key){
 
   show('gameLayout');
   buildChips(); renderLeaderboard();
-  mark(B.m.start);
+  mark(B.m.start, key === 'cc' ? {condition:`seed_${P.ccRngSeed}`} : {});
   runTrial();
 }
 
@@ -1305,19 +1392,40 @@ function buildChips(){
       updateSpinState();
     };
   });
-  document.querySelectorAll('#shapeChips .chip-shape').forEach(c => {
-    c.innerHTML = shapeMarkup(c.dataset.shape);
-    c.onclick = () => {
-      if (c.disabled) return;
-      document.querySelectorAll('#shapeChips .chip-shape').forEach(x=>x.classList.remove('selected'));
-      c.classList.add('selected');
-      betShape = c.dataset.shape;
-      mark(B.m.shape,{trial:trialNum+1, betShape});
-      updateSpinState();
-    };
-  });
+  const shapeButtons = Array.from(document.querySelectorAll('#shapeChips .chip-shape'));
+  if (currentBlock === 'counterconditioning'){
+    /* CC block: shape is forced from the pre-generated sequence, not clicked.
+       Repurpose the first chip slot as a non-interactive display; hide the rest. */
+    shapeButtons.forEach((c,i) => {
+      c.onclick = null; c.disabled = true; c.classList.remove('selected');
+      c.classList.toggle('hidden', i > 0);
+      c.classList.toggle('assigned-shape', i === 0);
+    });
+  } else {
+    shapeButtons.forEach(c => {
+      c.classList.remove('hidden','assigned-shape');
+      c.innerHTML = shapeMarkup(c.dataset.shape);
+      c.onclick = () => {
+        if (c.disabled) return;
+        shapeButtons.forEach(x=>x.classList.remove('selected'));
+        c.classList.add('selected');
+        betShape = c.dataset.shape;
+        mark(B.m.shape,{trial:trialNum+1, betShape});
+        updateSpinState();
+      };
+    });
+  }
 }
-const setChipsEnabled = on => document.querySelectorAll('.chip').forEach(c => c.disabled = !on);
+function renderForcedShape(shape){
+  const first = document.querySelector('#shapeChips .chip-shape');
+  if (first) first.innerHTML = shapeMarkup(shape);
+}
+const setChipsEnabled = on_ => {
+  document.querySelectorAll('#chips .chip').forEach(c => c.disabled = !on_);
+  if (currentBlock !== 'counterconditioning'){
+    document.querySelectorAll('#shapeChips .chip-shape').forEach(c => c.disabled = !on_);
+  }
+};
 function clearChipSelection(){
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   betAmount = null; betShape = null;
@@ -1337,11 +1445,12 @@ function stageShow(which){
   ['stageFix','reels'].forEach(id => $(id).classList.add('hidden'));
   if (which) $(which).classList.remove('hidden');
 }
-const slabShow = on => $('fbSlab').classList.toggle('on', !!on);
+const slabShow = onFlag => $('fbSlab').classList.toggle('on', !!onFlag);
 const rndShape = () => GAME_SHAPES[Math.floor(Math.random()*GAME_SHAPES.length)];
 
-/* freeze frame = three different shapes, so it can never be read as a win (x x x)
-   or as one of the NO-GAIN / LOSS combos; luminance and layout match the spin frames. */
+/* freeze frame = three different shapes, so it can never be read as an outcome
+   (x x x = LOSS, or one of the NO-GAIN combos); luminance and layout match the
+   spin frames. */
 function neutralFreezeFrame(){
   return GAME_SHAPES.slice().sort(()=>Math.random()-0.5).slice(0,3);
 }
@@ -1366,7 +1475,12 @@ async function runTrial(){
   /* phase 2 — cue, then wait for the response for as long as it takes */
   stageShow('reels');
   renderReels($('reels'), ['sphere','cube','pyramid']);
+  if (currentBlock === 'counterconditioning'){
+    betShape = ccShapeSequence[trialNum];
+    renderForcedShape(betShape);
+  }
   const cueRow = mark(B.m.cue,{trial:trialNum+1, diode:true});
+  if (currentBlock === 'counterconditioning') mark(B.m.shape,{trial:trialNum+1, betShape});
   await wait(CONFIG.CUE_MIN_VIEW);
   if (blockAborted) return;
   setChipsEnabled(true);
@@ -1426,7 +1540,9 @@ async function runTrial(){
     betShape, betAmount, outcome:res.outcome, amount:res.amount, diode:true
   });
 
-  /* wallet / winnings bookkeeping */
+  /* wallet / winnings bookkeeping — exact mirror of Day 1:
+     Day 1 WIN  : stake taken at spin, then +bet*2  => net +bet, winnings +bet*2
+     Day 2 LOSS : stake taken at spin, nothing back => net -bet, winnings -bet*2 */
   if (res.outcome === 'win'){ wallet += res.amount; totalWinnings += res.amount; }
   else if (res.outcome === 'loss'){ totalWinnings -= res.amount; }
   else { wallet += betAmount; }                       // no gain, no loss — stake returned
@@ -1503,6 +1619,7 @@ function advance(){
   else endBlock();
 }
 function endBlock(){
+  if (!B) return;                       // guard: skip pressed with no active block
   blockAborted = true;
   if (B === BLOCKS.cc) P.totalWinnings = totalWinnings;
   mark(B.m.end);
@@ -1568,7 +1685,7 @@ function renderLeaderboard(){
 
 /* ===================== 5. DIGIT CANCELLATION ===================== */
 let digitState = null;
-$('startDigitBtn').onclick = startDigit;
+on('startDigitBtn', startDigit);
 
 function startDigit(){
   currentBlock = 'digit_cancellation';
@@ -1640,8 +1757,8 @@ function endDigit(){
 /* ===================== 6. WORD FRAGMENT ===================== */
 const FRAGMENTS = ["B_L_","CA_E","STR__","H_N__","P__PLE","C_M__","_OUSE","TRE_","_AT","_O__SE"];
 let wordState = null;
-$('startWordBtn').onclick = startWord;
-$('submitWordBtn').onclick = () => submitFragment(false);
+on('startWordBtn', startWord);
+on('submitWordBtn', () => submitFragment(false));
 $('wordInput').addEventListener('keyup', e => { if (e.key === 'Enter') submitFragment(false); });
 
 function startWord(){
@@ -1697,7 +1814,7 @@ function endWord(){
 
 /* ===================== 7. BREATHING (PNS) ===================== */
 let breathState = null;
-$('startBreathBtn').onclick = startBreath;
+on('startBreathBtn', startBreath);
 
 function startBreath(){
   currentBlock = 'breathing_6bpm';
@@ -1785,8 +1902,8 @@ const TRAILS = [
    seq:()=>Array.from({length:25},(_,i)=>String(26+i))}
 ];
 let trailState = null;
-$('startTrailBtn').onclick = startTrail;
-$('beginTrailBtn').onclick = beginCurrentTrail;
+on('startTrailBtn', startTrail);
+on('beginTrailBtn', beginCurrentTrail);
 
 function startTrail(){
   currentBlock = 'trail_making';
@@ -1878,7 +1995,7 @@ function endTrail(){
 
 /* ===================== 9. COLD PRESSOR (SNS) ===================== */
 let coldState = null;
-$('startColdBtn').onclick = startCold;
+on('startColdBtn', startCold);
 
 function startCold(){
   currentBlock = 'cold_pressor';
@@ -1924,50 +2041,10 @@ $('affectiveForm').addEventListener('submit', e => {
     arousal:+$('arousalSlider').value,
     rt:+(nowRel() - affectiveStart).toFixed(2)
   };
-  mark('S31'); showMemory();
+  mark('S31'); showProbe('post');
 });
 
-/* ===================== 11. MEMORY / CONTINGENCY ===================== */
-let memoryStart = 0;
-function showMemory(){
-  currentBlock = 'memory';
-  memoryStart = nowRel(); mark('S40'); show('memoryForm');
-  const all = [...GAME_SHAPES, ...DISTRACTORS].sort(()=>Math.random()-0.5);
-  ['memorySymbolsList','contingencySymbolsList'].forEach(id => {
-    const list = $(id); list.innerHTML = '';
-    all.forEach(sym => {
-      const b = document.createElement('button');
-      b.type='button'; b.className='shape-opt'; b.dataset.shape = sym;
-      b.innerHTML = shapeMarkup(sym);
-      b.onclick = ()=> b.classList.toggle('selected');
-      list.appendChild(b);
-    });
-  });
-}
-const collectSelected = id =>
-  Array.from($(id).querySelectorAll('.shape-opt.selected')).map(b => b.dataset.shape);
-
-$('memoryForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const mem = collectSelected('memorySymbolsList');
-  P.memory = {
-    responses:mem,
-    hits:mem.filter(s=>GAME_SHAPES.includes(s)).length,
-    falseAlarms:mem.filter(s=>DISTRACTORS.includes(s)).length,
-    rt:+(nowRel()-memoryStart).toFixed(2)
-  };
-  /* on Day 2 the "correct" contingency answer is the LOSS set = the Day 1 CS+ shapes */
-  const con = collectSelected('contingencySymbolsList');
-  P.contingency = {
-    responses:con,
-    hits:con.filter(s=>REWARD_SHAPES.includes(s)).length,
-    falseAlarms:con.filter(s=>!REWARD_SHAPES.includes(s)).length,
-    rt:+(nowRel()-memoryStart).toFixed(2)
-  };
-  mark('S41'); showProbe('post');
-});
-
-/* ===================== 12. PROBE ===================== */
+/* ===================== 11. PROBE ===================== */
 let currentProbePhase = null, probeAborted = false;
 
 function buildProbePairs(){
@@ -2028,6 +2105,7 @@ async function showProbe(phase = 'post'){
   endProbe();
 }
 function endProbe(){
+  if (probeAborted && currentProbePhase === null) return;
   probeAborted = true;
   mark('S59',{phase:currentProbePhase});
   finish();
@@ -2059,6 +2137,8 @@ function buildTimestampWorkbook(){
 
   const timing = Object.entries(CONFIG).map(([k,v])=>({parameter:k, value:String(v)}));
   timing.push({parameter:'session', value:'Day 2 — reactivation + counterconditioning'});
+  timing.push({parameter:'loss_outcome_form', value:'three-of-a-kind of assigned shape, magnitude = bet x 2 (mirrors Day 1 win)'});
+  timing.push({parameter:'stimulus_rendering', value:'Achromatic pen-and-ink SVG line drawings; identical ink and paper on all shapes; uniform outline 2.6 / hatch 1.6 stroke width. Geometry identical to Days 1 and 3 — the same objects across all sessions. Shape identity is uncorrelated with hue and lightness'});
   timing.push({parameter:'experiment_start_iso', value:T0_ISO});
   timing.push({parameter:'clock_source', value:'performance.now() since experiment start'});
   timing.push({parameter:'amplifier', value:'Brain Products 32-channel'});
@@ -2110,7 +2190,7 @@ function buildDataWorkbook(){
     pct_bet_on_day1_rewarded_last10: P.ccTrials.length
       ? +(100*P.ccTrials.slice(-10).filter(t=>t.shape_day1_rewarded===1).length/Math.min(10,P.ccTrials.length)).toFixed(1) : '',
     mean_rt_ms: rts.length ? +(rts.reduce((a,b)=>a+b,0)/rts.length).toFixed(1) : '',
-    erp_bin_adequate: (loss>=20 && nogain>=20) ? 'YES' : 'NO — check trial counts per condition',
+    erp_bin_adequate: (loss>=30 && nogain>=30) ? 'YES' : 'NO — check trial counts per condition',
     total_winnings:P.totalWinnings
   }]), 'CC_Summary');
 
@@ -2124,12 +2204,10 @@ function buildDataWorkbook(){
     valence:P.affective.valence, arousal:P.affective.arousal, rt_ms:P.affective.rt
   }]), 'Affective');
 
-  XLSX.utils.book_append_sheet(wb, sheet([
-    {task:'memory_shapes_present', selected:P.memory.responses.join(', '),
-     hits:P.memory.hits, false_alarms:P.memory.falseAlarms, rt_ms:P.memory.rt},
-    {task:'contingency_loss_shapes', selected:P.contingency.responses.join(', '),
-     hits:P.contingency.hits, false_alarms:P.contingency.falseAlarms, rt_ms:P.contingency.rt}
-  ]), 'Memory_Contingency');
+  XLSX.utils.book_append_sheet(wb, sheet([{
+    cc_rng_seed: P.ccRngSeed,
+    cc_shape_sequence: P.ccShapeSequence.join(' | ')
+  }]), 'CC_Shape_Sequence');
 
   XLSX.utils.book_append_sheet(wb, sheet(P.probe), 'Probe');
 
@@ -2166,7 +2244,7 @@ function finish(){
   console.log('Participant record:', P);
   console.log('Event log:', eventLog);
 }
-$('redownloadBtn').onclick = downloadAll;
+on('redownloadBtn', downloadAll);
 
 /* ===================== SKIP HANDLERS ===================== */
 function noteSkip(name){
@@ -2174,48 +2252,53 @@ function noteSkip(name){
   P.skipped.push({block:name, at_ms:nowRel(), clock_iso:new Date().toISOString()});
 }
 document.querySelectorAll('[data-skip]').forEach(btn => {
-  btn.onclick = () => {
+  btn.addEventListener('click', () => {
     const s = btn.dataset.skip;
     noteSkip(s);
-    switch(s){
-      case 'participant':
-        P.name = P.name || 'participant'; startBaseline(); break;
-      case 'baseline':
-        clearInterval(baselineTimerId); afterBaseline(); break;
-      case 'probe':
-        endProbe(); break;
-      case 'retrievalIntro':
-        show('digitIntro'); break;
-      case 'game':
-        endBlock(); break;
-      case 'digitIntro':
-        show('wordIntro'); break;
-      case 'digit':
-        closeDigitGrid(); endDigit(); break;
-      case 'wordIntro':
-        show('breathIntro'); break;
-      case 'word':
-        endWord(); break;
-      case 'breathIntro':
-        show('trailIntro'); break;
-      case 'breath':
-        endBreath(); break;
-      case 'trailIntro':
-        show('ccIntro'); break;
-      case 'trail':
-        endTrail(); break;
-      case 'ccIntro':
-        show('coldIntro'); break;
-      case 'coldIntro':
-        showAffective(); break;
-      case 'cold':
-        endCold(); break;
-      case 'affective':
-        P.affective = {valence:null,arousal:null,rt:null}; mark('S31'); showMemory(); break;
-      case 'memory':
-        mark('S41'); showProbe('post'); break;
+    try{
+      switch(s){
+        case 'participant':
+          P.name = P.name || 'participant'; startBaseline(); break;
+        case 'baseline':
+          clearInterval(baselineTimerId); afterBaseline(); break;
+        case 'probe':
+          endProbe(); break;
+        case 'instructions':        // legacy value, kept so old markup still works
+        case 'retrievalIntro':
+          show('digitIntro'); break;
+        case 'game':
+          endBlock(); break;
+        case 'digitIntro':
+          show('wordIntro'); break;
+        case 'digit':
+          closeDigitGrid(); endDigit(); break;
+        case 'wordIntro':
+          show('breathIntro'); break;
+        case 'word':
+          endWord(); break;
+        case 'breathIntro':
+          show('trailIntro'); break;
+        case 'breath':
+          endBreath(); break;
+        case 'trailIntro':
+          show('ccIntro'); break;
+        case 'trail':
+          endTrail(); break;
+        case 'ccIntro':
+          show('coldIntro'); break;
+        case 'coldIntro':
+          showAffective(); break;
+        case 'cold':
+          endCold(); break;
+        case 'affective':
+          P.affective = {valence:null,arousal:null,rt:null}; mark('S31'); showProbe('post'); break;
+        default:
+          console.warn('[skip] no handler for data-skip="'+s+'"');
+      }
+    }catch(err){
+      console.error('[skip] handler failed for "'+s+'":', err);
     }
-  };
+  });
 });
 
 /* ===================== BOOT ===================== */
