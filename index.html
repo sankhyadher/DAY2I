@@ -511,6 +511,10 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
 
 .error{color:#ff7070; margin-bottom:var(--u); font-size:.9rem}
 .diode{position:fixed; left:0; bottom:0; width:44px; height:44px; background:#000; z-index:9999}
+/* DEBUG ONLY — CONFIG.DEBUG_PHASE. Top-right, outside the stage. */
+.dbg-phase{position:fixed; right:8px; top:8px; z-index:9998; padding:6px 10px;
+  font:12px/1.4 ui-monospace,Menlo,Consolas,monospace; color:#0f0; background:rgba(0,0,0,.82);
+  border:1px solid #0f0; border-radius:6px; pointer-events:none; white-space:pre}
 .diode.on{background:#fff}
 
 @media (max-width:900px){
@@ -658,6 +662,7 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
 </svg>
 
 <div class="diode hidden" id="diode"></div>
+<div class="dbg-phase hidden" id="dbgPhase"></div>
 
 <div class="container">
 
@@ -999,6 +1004,11 @@ const CONFIG = {
   P_LOSS_REWARDED: 0.80,            // used only if REINFORCEMENT = 'probabilistic'
   P_LOSS_NONREWARDED: 0.20,
 
+  DEBUG_PHASE: false,       // on-screen phase label + console timing log.
+                            // Flip to true only to re-verify the timeline; it
+                            // repaints on every phase boundary, so keep it false
+                            // for data collection.
+
   PHOTODIODE: true,
   DIODE_MS: 80,
   MARKER_WS: null,          // e.g. 'ws://127.0.0.1:8765' for an LSL/TTL bridge
@@ -1117,7 +1127,48 @@ const ANALYSIS_WINDOWS = [
 const GAME_SHAPES = ['sphere','cube','pyramid','cylinder'];
 const REWARD_SHAPES = ['sphere','pyramid'];          // Day 1 CS+ — now punished
 const NONREWARD_SHAPES = GAME_SHAPES.filter(s => !REWARD_SHAPES.includes(s));
-const NOGAIN_COMBOS = [['cube','cube','cylinder'],['cylinder','cylinder','cube'],['cube','cylinder','cylinder']];
+/* LEGACY — retained for reference only; no longer used to build outcome frames.
+   These are exactly the two cube/cylinder 2+1 patterns now RESERVED for the
+   spin/freeze frames, so using them as NO-GAIN outcomes would make the freeze
+   frame indistinguishable from a real outcome. See buildNogainCombo(). */
+const NOGAIN_COMBOS_LEGACY = [['cube','cube','cylinder'],['cylinder','cylinder','cube'],['cube','cylinder','cylinder']];
+
+/* ---- NEUTRAL (spin + freeze) FRAMES: cube + cylinder only ----------------------
+   The neutral pool is the two CS- shapes, so no CS+ (sphere / pyramid) ever appears
+   on the reels before the outcome and no reward- or punishment-associated cue sits
+   in the -500/0 ms SPN/CNV baseline.
+
+   A two-shape pool cannot make a three-distinct frame, so a neutral frame is always
+   2+1: [cube,cube,cylinder] or [cylinder,cylinder,cube]. Those are the only frames
+   the pool can produce that are not also outcome frames — [cube,cube,cube] and
+   [cylinder,cylinder,cylinder] are LOSS frames and are excluded.
+
+   For those two to stay unreadable as outcomes, no outcome frame may consist of cube
+   and cylinder alone. buildNogainCombo() enforces it. assertFrameSpaceDisjoint()
+   checks the full frame space at startup and fails loudly if that ever breaks. */
+const NEUTRAL_POOL = ['cube','cylinder'];
+const NEUTRAL_FRAME_CANON = ['cube','cylinder','cube'];   // fixed frame for the cue
+function neutralTriplet(){
+  const pair = NEUTRAL_POOL[Math.floor(Math.random()*2)];
+  const odd  = NEUTRAL_POOL.find(x => x !== pair);
+  return [pair,pair,odd].sort(()=>Math.random()-0.5);
+}
+
+/* NO-GAIN frame, matched to the LOSS frame's shape pool.
+   LOSS is [bet,bet,bet]; NO-GAIN is [bet,bet,other], so the bet shape is present in
+   both and the two differ by a single reel rather than by shape content. NO-GAIN on
+   Day 2 only arises for CS- bets, and the odd reel is drawn from the CS+ shapes, so
+   no outcome frame is ever built from cube and cylinder alone.
+
+   Side benefit for the cross-day contrast: this makes the Day 2 S 22 frame
+   structurally identical to the Day 1 S 22 frame. */
+function buildNogainCombo(shape){
+  const others = NONREWARD_SHAPES.includes(shape)
+    ? REWARD_SHAPES.slice()
+    : GAME_SHAPES.filter(x => x !== shape);
+  const pick = others[Math.floor(Math.random()*others.length)];
+  return [shape, shape, pick].sort(()=>Math.random()-0.5);
+}
 /* NOTE: LOSS combos are no longer a separate mixed-shape set. The loss outcome now
    mirrors the Day 1 win exactly — three-of-a-kind of the assigned shape — so that
    combo geometry is held constant across days and only the VALENCE of the slab
@@ -1231,6 +1282,15 @@ function flashDiode(){
   d.classList.add('on');
   setTimeout(()=>d.classList.remove('on'), CONFIG.DIODE_MS);
 }
+let _dbgT = 0;
+function dbgPhase(label){
+  if (!CONFIG.DEBUG_PHASE) return;
+  const t = nowRel(), d = _dbgT ? (t - _dbgT).toFixed(0) : '0';
+  _dbgT = t;
+  const el = document.getElementById('dbgPhase');
+  if (el) el.textContent = `${currentBlock}\ntrial ${trialNum+1}\n${label}\nprev phase: ${d} ms`;
+  console.log(`[${t.toFixed(0).padStart(8)} ms] ${currentBlock} trial ${trialNum+1}  ${label}  (+${d} ms)`);
+}
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const jitter = (a,b) => Math.round(a + Math.random()*(b-a));
 const mmss = s => `${String(Math.floor(Math.max(s,0)/60)).padStart(2,'0')}:${String(Math.max(s,0)%60).padStart(2,'0')}`;
@@ -1343,7 +1403,7 @@ const BLOCKS = {
                 amount: betAmount * 2};
       }
       return {outcome:'nogain',
-              combo: NOGAIN_COMBOS[Math.floor(Math.random()*NOGAIN_COMBOS.length)].slice().sort(()=>Math.random()-0.5),
+              combo: buildNogainCombo(betShape),
               amount: 0};
     }
   }
@@ -1448,12 +1508,9 @@ function stageShow(which){
 const slabShow = onFlag => $('fbSlab').classList.toggle('on', !!onFlag);
 const rndShape = () => GAME_SHAPES[Math.floor(Math.random()*GAME_SHAPES.length)];
 
-/* freeze frame = three different shapes, so it can never be read as an outcome
-   (x x x = LOSS, or one of the NO-GAIN combos); luminance and layout match the
-   spin frames. */
-function neutralFreezeFrame(){
-  return GAME_SHAPES.slice().sort(()=>Math.random()-0.5).slice(0,3);
-}
+/* neutralFreezeFrame() removed — the freeze no longer repaints anything. Its job is
+   done by neutralTriplet(), which constrains every spin frame instead, so the frame
+   the reels stop on is already non-informative. */
 
 async function runTrial(){
   if (blockAborted) return;
@@ -1461,6 +1518,11 @@ async function runTrial(){
   /* phase 1 — fixation / ITI */
   stageShow('stageFix');
   slabShow(false);
+  /* The slab is hidden by class, but the previous trial's amount and the "+$00"
+     placeholder still sat in the DOM through the ITI, cue, blank, spin and freeze.
+     Emptying the node means no amount exists anywhere on the page to paint before
+     S 22 / S 27, so no dropped frame can leak one into the freeze. */
+  $('fbText').textContent = '';
   setChipsEnabled(false); clearChipSelection();
   $('spinBtn').disabled = true;
   $('gameMessage').innerHTML = '';
@@ -1468,13 +1530,16 @@ async function runTrial(){
   updateReadouts();
   $('reels').classList.remove('sparkle','dim');
   renderLeaderboard();                       // updated only during ITI
+  dbgPhase('ITI / fixation');
   mark(B.m.fix,{trial:trialNum+1, diode:true});
   await wait(jitter(CONFIG.ITI_MIN, CONFIG.ITI_MAX));
   if (blockAborted) return;
 
   /* phase 2 — cue, then wait for the response for as long as it takes */
   stageShow('reels');
-  renderReels($('reels'), ['sphere','cube','pyramid']);
+  renderReels($('reels'), NEUTRAL_FRAME_CANON);   // fixed neutral frame, identical every
+                                                 // trial; no CS on the reels pre-outcome
+  dbgPhase('CUE');
   if (currentBlock === 'counterconditioning'){
     betShape = ccShapeSequence[trialNum];
     renderForcedShape(betShape);
@@ -1494,20 +1559,35 @@ async function runTrial(){
   $('spinBtn').disabled = true;
   $('gameMessage').innerHTML = '';
   mark(B.m.spin,{trial:trialNum+1, betShape, betAmount, rt});
+  /* A real blank. Previously this window waited 500 ms without hiding anything, so
+     the participant kept looking at the full static cue frame, and updateReadouts()
+     repainted the wallet mid-window — a visual transient a few ms after the commit
+     marker, inside the epoch meant to be free of stimulus- and motor-locked activity.
+     The stake is now deducted silently; the readouts are repainted on the next ITI,
+     which already calls updateReadouts(). */
+  dbgPhase('BLANK (post-choice)');
+  stageShow(null);
   if (!B.noFeedback) wallet -= betAmount;   // no stake is taken when no outcome is shown
-  updateReadouts();
   await wait(CONFIG.POST_CHOICE_BLANK);
   if (blockAborted) return;
 
   /* phase 3 — anticipation */
+  stageShow('reels');
+  dbgPhase('SPIN');
   mark(B.m.ant,{trial:trialNum+1, betShape, betAmount, diode:true});
-  const anim = setInterval(()=>renderReels($('reels'),[rndShape(),rndShape(),rndShape()]), CONFIG.REEL_ANIM_FRAME);
+  const anim = setInterval(()=>renderReels($('reels'), neutralTriplet()), CONFIG.REEL_ANIM_FRAME);
   const freezeMs = jitter(CONFIG.FREEZE_MIN, CONFIG.FREEZE_MAX);
   await wait(Math.max(0, CONFIG.ANTICIPATION - freezeMs));
   clearInterval(anim);
   if (blockAborted) return;
 
-  renderReels($('reels'), neutralFreezeFrame());
+  /* The freeze is a true motion offset with NO retinal change. Previously a fresh
+     random triplet was swapped in here; at 100 ms/frame that final swap looked like
+     one more spin frame, so the reels never appeared to stop, and S 17 / S 77 was
+     itself a visual onset whose P1/N1/P2 landed at the start of the -500/0 ms
+     baseline. Every spin frame is now already non-informative, so the reels are
+     halted by clearing the interval and nothing is repainted. */
+  dbgPhase(`FREEZE (${freezeMs} ms) — static, slab hidden`);
   mark(B.m.freeze,{trial:trialNum+1, condition:`freeze_${freezeMs}ms`, diode:true});
   await wait(freezeMs);
   if (blockAborted) return;
@@ -1534,6 +1614,7 @@ async function runTrial(){
   stageShow('reels');
   slabShow(true);
 
+  dbgPhase(`FEEDBACK — ${res.outcome.toUpperCase()}`);
   const fbCode = res.outcome === 'nogain' ? B.m.fbNeutral : B.m.fbPos;
   mark(fbCode, {
     trial:trialNum+1, condition:res.outcome.toUpperCase(),
@@ -1555,6 +1636,7 @@ async function runTrial(){
   if (blockAborted) return;
 
   /* phase 5 — affective reaction, strictly AFTER the ERP window */
+  dbgPhase('REACTION (post-ERP)');
   mark(B.m.react,{trial:trialNum+1, condition:res.outcome.toUpperCase()});
   if (res.outcome === 'win'){
     $('reels').classList.add('sparkle');
@@ -2303,7 +2385,29 @@ document.querySelectorAll('[data-skip]').forEach(btn => {
 
 /* ===================== BOOT ===================== */
 initMarkerBridge();
+/* Fails loudly if a neutral (spin/freeze) frame could ever be read as an outcome
+   frame. Walks the full frame space rather than sampling, so any later change to the
+   pools or to REINFORCEMENT that reintroduces a collision is caught before a
+   participant sees it. */
+function assertFrameSpaceDisjoint(){
+  const key = c => c.slice().sort().join(',');
+  const out = new Set();
+  for (const bet of GAME_SHAPES){
+    out.add(key([bet,bet,bet]));                                  // LOSS
+    const pool = NONREWARD_SHAPES.includes(bet) ? REWARD_SHAPES : GAME_SHAPES.filter(x=>x!==bet);
+    for (const o of pool) out.add(key([bet,bet,o]));              // NO-GAIN
+  }
+  const neutral = [key(['cube','cube','cylinder']), key(['cylinder','cylinder','cube'])];
+  const clash = neutral.filter(n => out.has(n));
+  if (clash.length){
+    const msg = 'FRAME COLLISION: neutral frame(s) ' + clash.join(' / ')
+              + ' can also occur as an outcome frame.';
+    console.error(msg); alert(msg);
+  }
+}
+assertFrameSpaceDisjoint();
 if (CONFIG.PHOTODIODE) $('diode').classList.remove('hidden');
+if (CONFIG.DEBUG_PHASE) $('dbgPhase').classList.remove('hidden');
 mark('S1');
 show('participantForm');
 </script>
