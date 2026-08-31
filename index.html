@@ -361,6 +361,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold); out
 .chip.selected{border-color:#8dff8d; box-shadow:0 0 16px #0f0, inset 0 0 0 3px rgba(122,98,36,.55)}
 .chip:disabled{opacity:.4; cursor:not-allowed; transform:none}
 .chip-shape{background:linear-gradient(180deg,#fdfcfa,#eceae4)}
+.assigned-label{color:var(--ink-dim); font-size:.85rem; margin-right:8px; align-self:center}
 .chip-shape.assigned-shape{cursor:default; pointer-events:none}
 .chip-shape svg{width:64%; height:64%; display:block}
 .chip-shape.selected{border-color:#8dff8d; box-shadow:0 0 16px #0f0, inset 0 0 0 3px rgba(122,98,36,.55)}
@@ -756,11 +757,21 @@ input[type=range]{width:100%; accent-color:var(--gold); height:24px}
       <button class="chip" type="button" data-value="20">$20</button>
     </div>
 
+    <!-- Reactivation block: the participant picks a shape, so all four are shown. -->
     <div class="chip-row" id="shapeChips">
       <button class="chip chip-shape" type="button" data-shape="sphere"></button>
       <button class="chip chip-shape" type="button" data-shape="cube"></button>
       <button class="chip chip-shape" type="button" data-shape="pyramid"></button>
       <button class="chip chip-shape" type="button" data-shape="cylinder"></button>
+    </div>
+
+    <!-- Counterconditioning block: the shape is forced from the balanced sequence, so
+         it is displayed rather than chosen. This is its own row (matching Day 1) instead
+         of the old approach of repurposing shapeChips[0] and hiding the other three,
+         which left an unlabelled lone chip floating where a selector used to be. -->
+    <div class="chip-row hidden" id="assignedShapeRow">
+      <span class="assigned-label">Your shape this round:</span>
+      <div class="chip chip-shape assigned-shape" id="assignedShapeDisplay"></div>
     </div>
 
     <div class="message" id="gameMessage"></div>
@@ -1453,17 +1464,16 @@ function buildChips(){
     };
   });
   const shapeButtons = Array.from(document.querySelectorAll('#shapeChips .chip-shape'));
-  if (currentBlock === 'counterconditioning'){
-    /* CC block: shape is forced from the pre-generated sequence, not clicked.
-       Repurpose the first chip slot as a non-interactive display; hide the rest. */
-    shapeButtons.forEach((c,i) => {
-      c.onclick = null; c.disabled = true; c.classList.remove('selected');
-      c.classList.toggle('hidden', i > 0);
-      c.classList.toggle('assigned-shape', i === 0);
-    });
+  const forced = currentBlock === 'counterconditioning';
+  /* The two blocks get two different rows, and exactly one is ever visible. */
+  $('shapeChips').classList.toggle('hidden', forced);
+  $('assignedShapeRow').classList.toggle('hidden', !forced);
+  if (forced){
+    shapeButtons.forEach(c => { c.onclick = null; c.disabled = true; c.classList.remove('selected'); });
   } else {
     shapeButtons.forEach(c => {
-      c.classList.remove('hidden','assigned-shape');
+      c.classList.remove('selected');
+      c.disabled = false;
       c.innerHTML = shapeMarkup(c.dataset.shape);
       c.onclick = () => {
         if (c.disabled) return;
@@ -1477,8 +1487,8 @@ function buildChips(){
   }
 }
 function renderForcedShape(shape){
-  const first = document.querySelector('#shapeChips .chip-shape');
-  if (first) first.innerHTML = shapeMarkup(shape);
+  const el = $('assignedShapeDisplay');
+  if (el) el.innerHTML = shapeMarkup(shape);
 }
 const setChipsEnabled = on_ => {
   document.querySelectorAll('#chips .chip').forEach(c => c.disabled = !on_);
